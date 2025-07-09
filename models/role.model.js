@@ -13,6 +13,12 @@ function getById(id) {
   return role;
 }
 
+function getByName(name) {
+  if (!name) return null;
+  name = name.toUpperCase();
+  return db.prepare('SELECT * FROM roles WHERE name = ?').get(name);
+}
+
 /*
 Convencional:
 if (role) {
@@ -66,4 +72,4 @@ function setPermisos(roleId, permisosIds) {
   }
 }
 
-module.exports = { getAll, getById, create, update, remove, getPermisos, setPermisos };
+module.exports = { getAll, getById, getByName, create, update, remove, getPermisos, setPermisos };

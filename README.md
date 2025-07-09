@@ -1,23 +1,27 @@
-# Gestión de Usuarios (Node.js + Express + EJS)
+# Gestión de Usuarios — API REST (Node.js + Express + JWT)
 
-Este proyecto es una aplicación web para la gestión de usuarios, roles y permisos, desarrollada con Node.js, Express, SQLite y EJS como motor de vistas.
+> **Trabajo Práctico Final para la materia Desarrollo de sistemas web (Backend)**  
+> Realizado por **Leonardo Morganti** y **Matias Narvaja**
+
+Este proyecto es una API para la gestión de usuarios, roles y permisos, desarrollada con Node.js, Express, SQLite y autenticación JWT.
 
 ## Características principales
 
-- Autenticación de usuarios con email y contraseña (hash con bcrypt).
+- API 100% JSON, sin vistas web.
+- Autenticación y autorización con JWT.
 - Gestión de roles (ADMIN y USUARIO por defecto).
 - Solo los usuarios con rol ADMIN pueden ver, editar y eliminar todos los usuarios.
-- Los usuarios con rol USUARIO solo pueden ver y editar su propio perfil.
-- Creación y edición de usuarios con formularios modernos (Bootstrap).
-- Protección de rutas: solo usuarios autenticados pueden acceder a las funcionalidades.
-- Gestión de sesiones con express-session.
+- Los usuarios con rol USUARIO solo pueden ver, editar y eliminar su propio usuario.
+- Registro abierto: cualquier usuario puede registrarse con `/register` (rol USUARIO por defecto), pero un ADMIN puede crear usuarios con cualquier rol.
+- Baja lógica de usuarios (soft delete).
+- Protección de rutas: solo usuarios autenticados pueden acceder a la API (excepto `/login` y `/register`).
 
 ## Instalación
 
 1. **Clona el repositorio:**
    ```bash
-   git clone <URL_DEL_REPO>
-   cd <NOMBRE_DEL_REPO>
+   git clone https://github.com/MatiasNarvaja/backend-node-final.git
+   cd backend-node-final
    ```
 
 2. **Instala las dependencias:**
@@ -25,53 +29,19 @@ Este proyecto es una aplicación web para la gestión de usuarios, roles y permi
    npm install
    ```
 
-3. **(Opcional) Elimina la base de datos para empezar de cero:**
-   ```bash
-   del usuarios.db # o rm usuarios.db en Linux/Mac
-   ```
-
-4. **Inicia la aplicación:**
+3. **Inicia la aplicación:**
    ```bash
    npm start
    ```
-   O bien:
-   ```bash
-   node ./bin/www
-   ```
 
-5. **Accede a la app:**
-   Abre tu navegador en [http://localhost:3000](http://localhost:3000)
 
-## Primeros pasos
-
-- Crea un usuario con rol ADMIN para poder gestionar el sistema.
-- Los usuarios no-admin solo pueden ver y editar su propio perfil.
-- El campo de rol solo es visible y editable para usuarios ADMIN.
-
-## Estructura del proyecto
-
-- `app.js` — Configuración principal de la app Express.
-- `controllers/` — Lógica de negocio para usuarios, roles, permisos y autenticación.
-- `models/` — Acceso a datos y lógica de base de datos (SQLite).
-- `routes/` — Definición de rutas Express.
-- `views/` — Vistas EJS para frontend.
-- `public/` — Archivos estáticos (CSS, imágenes).
-- `usuarios.db` — Base de datos SQLite (se crea automáticamente).
-
-## Dependencias principales
-
-- express
-- ejs
-- better-sqlite3
-- express-session
-- bcrypt
-- morgan
-
-## Notas de seguridad
+4. Seguridad
+- Todas las rutas (excepto `/login` y `/register`) requieren JWT en el header:
+  ```
+  Authorization: Bearer <token>
+  ```
+- El token expira a los 15 minutos.
 - Las contraseñas se almacenan hasheadas con bcrypt.
-- No subas el archivo `usuarios.db` a producción ni a repositorios públicos.
-- Cambia el valor de `secret` en la configuración de sesión para producción.
 
----
-
-¡Contribuciones y sugerencias son bienvenidas! 
+## Notas
+- El registro de usuario es abierto, pero solo un admin puede asignar roles distintos a USUARIO.

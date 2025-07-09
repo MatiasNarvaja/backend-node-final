@@ -1,51 +1,64 @@
 const express = require('express');
 const path = require('path');
-const morgan = require('morgan');
-const session = require('express-session');
+const jwt = require('jsonwebtoken');
 const userRoutes = require('./routes/user.routes');
 const roleRoutes = require('./routes/role.routes');
 const permisoRoutes = require('./routes/permiso.routes');
 const authRoutes = require('./routes/auth.routes');
 const createError = require('http-errors');
+const userController = require('./controllers/user.controller');
+
+const JWT_SECRET = 'jwt_super_secreto'; // Debe ser igual al usado en el controlador
 
 // Instancia de la app
 const app = express();
 
-// Configuración de sesiones
-app.use(session({
-  secret: 'mi_clave_secreta',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false } // Cambia a true si usas HTTPS
-}));
+// Configuracion de entorno 
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
-// Middleware para proteger rutas (excepto login)
+// Middleware opcional para /register: si hay token, decodifica el usuario
+app.post('/register', (req, res, next) => {
+  console.log('Middleware /register, headers:', req.headers);
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    try {
+      const user = jwt.verify(token, JWT_SECRET);
+      req.user = user;
+    } catch (err) {
+      // Token inválido, ignorar y continuar como usuario no autenticado
+      req.user = undefined;
+    }
+  }
+  next();
+}, userController.createUser);
+
+// Middleware de autenticación JWT global (excepto login y archivos públicos)
 app.use((req, res, next) => {
   const openPaths = ['/login', '/users/new'];
   if (openPaths.includes(req.path) || req.path.startsWith('/public')) {
     return next();
   }
-  if (!req.session.user) {
-    return res.redirect('/login');
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).send('Token de autenticación requerido');
   }
-  next();
+  const token = authHeader.split(' ')[1];
+  try {
+    const user = jwt.verify(token, JWT_SECRET);
+    req.user = user;
+    next();
+  } catch (err) {
+    return res.status(401).send('Token inválido o expirado');
+  }
 });
-
-// Configuracion de vistas
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-
-// Configuracion de entorno 
-app.use(morgan('dev'));
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
 
 // Configuracion de rutas
 app.use('/users', userRoutes);
 app.use('/roles', roleRoutes);
 app.use('/permisos', permisoRoutes);
 app.use(authRoutes);
-
 
 // Configuracion de redireccion (por defecto)
 app.get('/', (req, res) => {
@@ -60,7 +73,7 @@ app.use((req, res, next) => {
 // Manejador de errores
 app.use((err, req, res, next) => {
   res.status(err.status || 500);
-  res.render('general_error', { message: err.message, error: app.get('env') === 'development' ? err : {} });
+  res.json({ message: err.message, error: app.get('env') === 'development' ? err : {} });
 });
 
 module.exports = app;
