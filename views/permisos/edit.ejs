@@ -1,0 +1,6 @@
+<h1>Editar Permiso</h1>
+<form action="/permisos/<%= permiso.id %>" method="POST">
+  <label>Nombre:</label>
+  <input type="text" name="nombre" value="<%= permiso.nombre %>" required />
+  <button type="submit">Actualizar</button>
+</form> 

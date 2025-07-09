@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Nuevo Usuario</title>
+</head>
+<body>
+  <h1>Nuevo Usuario</h1>
+  <form action="/users" method="POST">
+    <label>Nombre:</label>
+    <input type="text" name="name" required /> <br/>
+    <label>Email:</label>
+    <input type="email" name="email" required /> <br/>
+    <label>Contraseña:</label>
+    <input type="password" name="password" required /> <br/>
+    <label>Rol:</label>
+    <select name="role_id">
+      <% if (typeof roles !== 'undefined') { %>
+        <% roles.forEach(function(rol) { %>
+          <option value="<%= rol.id %>"><%= rol.name %></option>
+        <% }); %>
+      <% } %>
+    </select> <br/>
+    <button type="submit">Crear</button>
+  </form>
+  <a href="/users">Volver</a>
+</body>
+</html> 

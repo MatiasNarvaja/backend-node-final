@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Editar Usuario</title>
+</head>
+<body>
+  <h1>Editar Usuario</h1>
+  <form action="/users/<%= user.id %>" method="POST">
+    <label>Nombre:</label>
+    <input type="text" name="name" value="<%= user.name %>" required /> <br/>
+    <label>Email:</label>
+    <input type="email" name="email" value="<%= user.email %>" required /> <br/>
+    <label>Rol:</label>
+    <select name="role_id">
+      <option value="" <%= !user.role_id ? 'selected' : '' %>>Ningún rol</option>
+      <% roles.forEach(function(rol) { %>
+        <option value="<%= rol.id %>" <%= user.role_id == rol.id ? 'selected' : '' %>><%= rol.name %></option>
+      <% }); %>
+    </select> <br/>
+    <button type="submit">Actualizar</button>
+  </form>
+  <a href="/users">Volver</a>
+</body>
+</html> 
