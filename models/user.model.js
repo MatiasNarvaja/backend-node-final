@@ -1,14 +1,15 @@
 const db = require('../config/db');
 const chalk = require('chalk');
+const bcrypt = require('bcrypt');
 
 function getAll({ limit = 10, offset = 0, search = '', role = null }) {
   const baseQuery = `SELECT users.*, roles.name AS role_name FROM users
     LEFT JOIN roles ON users.role_id = roles.id
-    WHERE deleted_at IS NULL AND (name LIKE ? OR email LIKE ?) ` +
+    WHERE deleted_at IS NULL AND (email LIKE ?) ` +
     (role ? 'AND role_id = ? ' : '') +
     'ORDER BY id LIMIT ? OFFSET ?';
 
-  const params = [`%${search}%`, `%${search}%`];
+  const params = [`%${search}%`];
   if (role) params.push(role);
   params.push(Number(limit), Number(offset));
 
@@ -23,28 +24,35 @@ function getById(id) {
   return user;
 }
 
-function create({ name, email, role_id, password }) {
-  if (!name || name.length < 2) throw new Error('Nombre inválido');
+function create({ email, password, role_id }) {
   if (!email || !email.includes('@')) throw new Error('Email inválido');
+  if (!password || password.length < 4) throw new Error('Contraseña inválida');
   const now = new Date().toISOString();
-  password = password || 'password';
+  const hashedPassword = bcrypt.hashSync(password, 10);
   const result = db.prepare(`
-    INSERT INTO users (user, email, role_id, password, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(name, email, role_id || null, password, now, now);
+    INSERT INTO users (email, password, role_id, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(email, hashedPassword, role_id || null, now, now);
   console.log(chalk.green(`[DB] Usuario creado con ID ${result.lastInsertRowid}`));
   return result;
 }
 
-function update(id, { name, email, role_id, password }) {
-  if (!name || name.length < 2) throw new Error('Nombre inválido');
+function update(id, { email, password, role_id }) {
   if (!email || !email.includes('@')) throw new Error('Email inválido');
   const now = new Date().toISOString();
-  // No actualizamos password desde aquí por seguridad
-  const result = db.prepare(`
-    UPDATE users SET name = ?, email = ?, role_id = ?, updated_at = ?
-    WHERE id = ? AND deleted_at IS NULL
-  `).run(name, email, role_id || null, now, id);
+  let result;
+  if (password) {
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    result = db.prepare(`
+      UPDATE users SET email = ?, password = ?, role_id = ?, updated_at = ?
+      WHERE id = ? AND deleted_at IS NULL
+    `).run(email, hashedPassword, role_id || null, now, id);
+  } else {
+    result = db.prepare(`
+      UPDATE users SET email = ?, role_id = ?, updated_at = ?
+      WHERE id = ? AND deleted_at IS NULL
+    `).run(email, role_id || null, now, id);
+  }
   console.log(chalk.cyan(`[DB] Usuario ID ${id} actualizado (${result.changes} cambio/s)`));
   return result;
 }
